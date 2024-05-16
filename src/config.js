@@ -1,5 +1,5 @@
 const dotenv = require('dotenv');
-const result = dotenv.config({ path: '.release.env'});
+const result = dotenv.config({ path: '.prod.env'});
 
 if (result.error) {
   throw result.error;
