@@ -1,12 +1,12 @@
 const express = require('express');
 const mongoose = require('mongoose');
-const { DB_URI, PORT } = require('./config');
+const { DB_URI } = require('./config');
 const userRoutes = require('./routes/users.routes');
 
 const app = express();
 app.use(express.json());
 
-// Database connection
+mongoose.set('strictQuery', true);
 mongoose.connect(DB_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true
@@ -21,4 +21,4 @@ app.get('/', (req, res) => {
 // Routes
 app.use('/users', userRoutes);
 
-app.listen(PORT, () => console.log(`Server running on port ${PORT}; DB_URI: ${DB_URI}`));
+module.exports = app;
