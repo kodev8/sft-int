@@ -92,6 +92,7 @@ describe('Testing routes on /users', () => {
     describe('POST /users', () => {
         it('should create a new user', async () => {
             sandbox.stub(User.prototype, 'save').resolves(john);
+            sandbox.stub(User, 'findOne').resolves(null);
 
             const response = await request(app).post('/users').send(john);
             expect(response.status).to.equal(201);
@@ -165,7 +166,7 @@ describe('Testing routes on /users', () => {
         });
 
         it('should return 404 if user is not found', async () => {
-            sandbox.stub(User, 'findOne').resolves(null);
+            sandbox.stub(User, 'findOneAndUpdate').resolves(null);
             const response = await request(app).patch('/users').send(jane);
             expect(response.status).to.equal(404);
             expect(response.body).to.deep.equal({msg: 'User not found'});
