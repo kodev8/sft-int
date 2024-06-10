@@ -92,6 +92,7 @@ describe('Testing routes on /users', () => {
     describe('POST /users', () => {
         it('should create a new user', async () => {
             sandbox.stub(User.prototype, 'save').resolves(john);
+            sandbox.stub(User, 'findOne').resolves(null);
 
             const response = await request(app).post('/users').send(john);
             expect(response.status).to.equal(201);
