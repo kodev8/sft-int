@@ -151,12 +151,23 @@ describe('Testing routes on /users', () => {
 
     describe('PATCH /users', () => {
         it('should update a user', async () => {
-            sandbox.stub(User, 'findOneAndUpdate').resolves(john);
+            let updatedUser = {
+                ...john,
+                name: 'John Doe Up'
+            };
+            sandbox.stub(User, 'findOneAndUpdate').resolves(updatedUser);
             sandbox.stub(User.prototype, 'save').resolves();
-
+           
             const response = await request(app).patch('/users').send(john);
             expect(response.status).to.equal(200);
-            expect(response.body).to.deep.equal({msg: 'User updated', ...john});
+            console.log(response.body);
+            expect(response.body).to.deep.equal({msg: 'User updated', ...updatedUser});
+        });
+
+        it('should return 204 if user is unchanged', async () => {
+            sandbox.stub(User, 'findOneAndUpdate').resolves(john);
+            const response = await request(app).patch('/users').send(john);
+            expect(response.status).to.equal(204);
         });
 
         it('should return 400 if email is missing', async () => {
@@ -166,7 +177,7 @@ describe('Testing routes on /users', () => {
         });
 
         it('should return 404 if user is not found', async () => {
-            sandbox.stub(User, 'findOne').resolves(null);
+            sandbox.stub(User, 'findOneAndUpdate').resolves(null);
             const response = await request(app).patch('/users').send(jane);
             expect(response.status).to.equal(404);
             expect(response.body).to.deep.equal({msg: 'User not found'});

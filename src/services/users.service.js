@@ -83,18 +83,29 @@ const removeUser = async (req, res) => {
 
 const updateUser = async (req, res) => {
 
-    const { email, ...data } = req.body;
-    if (!email) {
-        return res.status(400).json({msg: 'Email is required'});
-    }
-    
-    try {
-        const updatedUser = await User.findOneAndUpdate({ email }, {name: data.name}, {new: true});
+  try {
+
+        const { email, ...data } = req.body;
+        if (!email) {
+            return res.status(400).json({msg: 'Email is required'});
+        }
+        if (!data.name) {
+            return res.status(400).json({msg: 'Name is required'});
+        }
+        
+        let formattedEmail = formatText(email, tolower=true);
+        let formattedName = formatText(data.name);
+        if (!formattedName) {
+            return res.status(400).json({msg: `${data.name} is not a valid name`});
+        }
+        const updatedUser = await User.findOneAndUpdate({ email: formattedEmail }, {name: formattedName}, {new: true});
         if (!updatedUser) {
             return res.status(404).json({msg: 'User not found'});
-
         }
-        return res.status(200).json({msg: 'User updated', ...updatedUser});
+        if (updatedUser.name === formattedName) {
+          return res.status(204).send();
+        }
+        return res.status(200).json({msg: 'User updated', name: updatedUser.name, email: updatedUser.email});
 
     }
     catch (err) {
