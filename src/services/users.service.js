@@ -1,4 +1,5 @@
 const User = require('../models/users.model');
+const formatText = require('../utils/formatText');
 
 const createUser = async (req, res) => {
   const { name, email } = req.body;
@@ -7,15 +8,21 @@ const createUser = async (req, res) => {
       return res.status(400).json({msg: 'Name and email are required fields'});
     }
 
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      return res.status(400).json({msg: `${email} is not a valid email address`});
+    let formattedName = formatText(name);
+    if (!formattedName) {
+      return res.status(400).json({msg: `${name} is not a valid name`});
     }
 
-    if (await User.findOne({ email })) {
+    let formattedEmail = formatText(email, tolower=true);
+    if (!formattedEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formattedEmail)) {
+      return res.status(400).json({msg: `${email} is not a valid email address`});
+    }
+    const usercheck = await User.findOne({ email: formattedEmail });
+    if (usercheck) {
       return res.status(400).json({msg: 'User already exists'});
     }
 
-    const user = new User({ name, email });
+    const user = new User({ name: formattedName, email: formattedEmail});
     await user.save();
     return res.status(201).json({msg: 'User created', name: user.name, email: user.email});
     
@@ -55,14 +62,13 @@ const getUser  = async (req, res) => {
 }
 
 const removeUser = async (req, res) => {
-    
-  const { email } = req.body;
-    if (!email) {
-        return res.status(400).json({msg: 'Email is required'});
-    }
-    try {
-      
-        const user = await User.findOne({ email });
+  try {
+    const { email } = req.body;
+      if (!email) {
+          return res.status(400).json({msg: 'Email is required'});
+      }
+        let formattedEmail = formatText(email, tolower=true);
+        const user = await User.findOne({ email: formattedEmail });
         if (!user) {
             return res.status(404).json({msg: 'User not found'});
         }
@@ -77,18 +83,29 @@ const removeUser = async (req, res) => {
 
 const updateUser = async (req, res) => {
 
-    const { email, ...data } = req.body;
-    if (!email) {
-        return res.status(400).json({msg: 'Email is required'});
-    }
-    
-    try {
-        const updatedUser = await User.findOneAndUpdate({ email }, {name: data.name}, {new: true});
+  try {
+
+        const { email, ...data } = req.body;
+        if (!email) {
+            return res.status(400).json({msg: 'Email is required'});
+        }
+        if (!data.name) {
+            return res.status(400).json({msg: 'Name is required'});
+        }
+        
+        let formattedEmail = formatText(email, tolower=true);
+        let formattedName = formatText(data.name);
+        if (!formattedName) {
+            return res.status(400).json({msg: `${data.name} is not a valid name`});
+        }
+        const updatedUser = await User.findOneAndUpdate({ email: formattedEmail }, {name: formattedName}, {new: true});
         if (!updatedUser) {
             return res.status(404).json({msg: 'User not found'});
-
         }
-        return res.status(200).json({msg: 'User updated', ...updatedUser});
+        if (updatedUser.name === formattedName) {
+          return res.status(204).send();
+        }
+        return res.status(200).json({msg: 'User updated', name: updatedUser.name, email: updatedUser.email});
 
     }
     catch (err) {
