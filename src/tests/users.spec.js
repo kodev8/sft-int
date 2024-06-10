@@ -195,7 +195,7 @@ describe('Testing user service functions', () => {
             }
 
             it('should update a user if found', async () => {
-                req.body = updatedUser;
+                req.body = existingUser;
                 
                 sandbox.stub(User, 'findOneAndUpdate').resolves(updatedUser);
     
@@ -206,6 +206,13 @@ describe('Testing user service functions', () => {
                     msg: 'User updated',
                     ...updatedUser
                 }))).to.be.true;
+            });
+
+            it ('should return 204 if user is unchanged', async () => {
+                req.body = existingUser;
+                sandbox.stub(User, 'findOneAndUpdate').resolves(existingUser);
+                await userService.updateUser(req, res);
+                expect(res.status.calledWith(204)).to.be.true;
             });
 
     
