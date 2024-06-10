@@ -1,4 +1,5 @@
 const User = require('../models/users.model');
+const formatText = require('../utils/formatText');
 
 const createUser = async (req, res) => {
   const { name, email } = req.body;
@@ -7,15 +8,21 @@ const createUser = async (req, res) => {
       return res.status(400).json({msg: 'Name and email are required fields'});
     }
 
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      return res.status(400).json({msg: `${email} is not a valid email address`});
+    let formattedName = formatText(name);
+    if (!formattedName) {
+      return res.status(400).json({msg: `${name} is not a valid name`});
     }
 
-    if (await User.findOne({ email })) {
+    let formattedEmail = formatText(email, tolower=true);
+    if (!formattedEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formattedEmail)) {
+      return res.status(400).json({msg: `${email} is not a valid email address`});
+    }
+    const usercheck = await User.findOne({ email: formattedEmail });
+    if (usercheck) {
       return res.status(400).json({msg: 'User already exists'});
     }
 
-    const user = new User({ name, email });
+    const user = new User({ name: formattedName, email: formattedEmail});
     await user.save();
     return res.status(201).json({msg: 'User created', name: user.name, email: user.email});
     
