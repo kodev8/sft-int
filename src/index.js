@@ -20,8 +20,8 @@ mongoose.connect(DB_URI, {
 // .then(() => console.log('MongoDB connected'))
 .catch(err => console.error(err));
 
-app.get('/', (req, res) => {
-  res.send('Hello World!');
+app.get('/health', (req, res) => {
+  res.send('Server is running');
 });
 
 // Routes
