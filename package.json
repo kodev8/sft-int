@@ -6,11 +6,14 @@
   "scripts": {
     "start": "node -r dotenv/config server.js",
     "dev": "nodemon -r dotenv/config server.js",
+    "prod": "node -r dotenv/config server.js",
+    "release":"node -r dotenv/config server.js",
     "test": "mocha --require dotenv/config --exit ./src/tests/*.spec.js",
     "test:watch": "mocha --require dotenv/config --watch --exit ./src/tests/*.spec.js",
     "coverage": "nyc --reporter=text npm test"
   },
   "dependencies": {
+    "cors": "^2.8.5",
     "express": "^4.19.2",
     "mongoose": "^6.12.9"
   },
