@@ -62,14 +62,13 @@ const getUser  = async (req, res) => {
 }
 
 const removeUser = async (req, res) => {
-    
-  const { email } = req.body;
-    if (!email) {
-        return res.status(400).json({msg: 'Email is required'});
-    }
-    try {
-      
-        const user = await User.findOne({ email });
+  try {
+    const { email } = req.body;
+      if (!email) {
+          return res.status(400).json({msg: 'Email is required'});
+      }
+        let formattedEmail = formatText(email, tolower=true);
+        const user = await User.findOne({ email: formattedEmail });
         if (!user) {
             return res.status(404).json({msg: 'User not found'});
         }
