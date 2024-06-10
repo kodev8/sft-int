@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { Button, InputField } from './FormElements'  
 import { createUser,} from '../utils/services/user'
+import { useToast } from '../utils/useToast'
 
 function Users  () { // use function to get access to prototype methods
 
@@ -21,7 +22,7 @@ function Users  () { // use function to get access to prototype methods
     e.preventDefault()
 
     if (!userForm.name || !userForm.email) {
-      console.error("Please fill in all fields")
+      useToast("Please fill in all fields", "warn", "toast", { limit: 1 })
       return
     }
     createUser(userForm)
@@ -33,7 +34,7 @@ function Users  () { // use function to get access to prototype methods
       })
     })
     .catch((err) => {
-      console.error(err)
+      useToast("An error occurred while creating user", "error", "toast", { limit: 1})
     })
     
     
