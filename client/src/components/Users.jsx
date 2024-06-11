@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react'
 import { Button, InputField } from './FormElements'  
 import UserCard from './UserCard'
+import UserPage from './UserPage'
 import { createUser, fetchUsers } from '../utils/services/user'
 import { useToast } from '../utils/useToast'
 
 const Users = () => { 
 
+  const [activeUser, setActiveUser] = useState(null)
   const [loading, setLoading] = useState(false)
   
   const [userForm, setUserForm] = useState({
@@ -56,6 +58,15 @@ const Users = () => {
   
   return (
         <>
+        { 
+          activeUser ? (
+            <UserPage user={activeUser} setActiveUser={setActiveUser}/> 
+          )
+      
+            :
+            (
+
+              <>
             <div className="flex flex-col gap-y-8  col-span-full md:col-span-5 text-center h-full items-center p-4 mt-12">
 
               <h1 className="text-3xl font-bold">Enter a new user!</h1>
@@ -96,11 +107,14 @@ const Users = () => {
                     <p>No users found</p>
                   :
                     users.map((user, index) => (
-                      <UserCard user={user} key={index} />
+                      <UserCard key={index} user={user} onClick={() => setActiveUser(user)}  />
                     ))
                 }
                 </div>
           </div>
+          </>
+          )
+        }
       </>
   )
 }

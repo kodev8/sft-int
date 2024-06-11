@@ -1,13 +1,13 @@
 import { Button } from './FormElements'
 
 
-const UserCard = ({ user }) => {
+const UserCard = ({ user, onClick }) => {
 
 
     return (
       <div className="w-fit h-fit min-h-12 flex flex-col md:flex-row items-center md:justify-self-center md:w-full p-4 bg-white shadow-md rounded-md">
 
-        <div className='hover:underline cursor-pointer'>
+        <div onClick={onClick} className='hover:underline cursor-pointer'>
             <h1 className="text-lg font-bold">{user.name}</h1>
             <p className="text-sm text-gray-500">{user.email}</p>
         </div>
