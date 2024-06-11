@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react'
 import { Button, InputField } from './FormElements'  
-import { createUser,} from '../utils/services/user'
+import UserCard from './UserCard'
+import { createUser, fetchUsers } from '../utils/services/user'
 import { useToast } from '../utils/useToast'
 
-function Users  () { // use function to get access to prototype methods
+const Users = () => { 
 
-
+  const [loading, setLoading] = useState(false)
+  
   const [userForm, setUserForm] = useState({
     name: "",
     email: ""
@@ -14,7 +16,17 @@ function Users  () { // use function to get access to prototype methods
  const [users, setUsers] = useState([])
 
  useEffect(() => {
-// fetch users here
+  setLoading(true)
+    fetchUsers()
+    .then((data) => {
+      setUsers(data)
+    })
+    .catch((err) => {
+      useToast("An error occurred", "error", "toast", { limit: 1})
+    })
+    .finally(() => {
+      setLoading(false)
+    })
   }, [])
 
 
@@ -80,14 +92,11 @@ function Users  () { // use function to get access to prototype methods
 
                 <div className="w-full h-full grid grid-cols- gap-y-4">
                 {
-                  users.length === 0 ?
+                  users.length === 0 && !loading ?
                     <p>No users found</p>
                   :
                     users.map((user, index) => (
-                      <div key={index} className="w-full">
-                        <p>{user.name}</p>
-                        <p>{user.email}</p>
-                        </div>
+                      <UserCard user={user} key={index} />
                     ))
                 }
                 </div>
