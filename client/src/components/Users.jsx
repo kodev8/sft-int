@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { Button, InputField } from './FormElements'  
 import UserCard from './UserCard'
 import UserPage from './UserPage'
-import { createUser, fetchUsers } from '../utils/services/user'
+import { createUser, fetchUsers, deleteUser } from '../utils/services/user'
 import { useToast } from '../utils/useToast'
 
 const Users = () => { 
@@ -30,6 +30,18 @@ const Users = () => {
       setLoading(false)
     })
   }, [])
+
+  const handleDeleteUser = (email) => {
+    deleteUser(email)
+    .then((data) => {
+      const newUsers = users.filter((user) => user.email !== email)
+      setUsers(newUsers)
+      useToast("User deleted successfully", "success", "toast", { limit: 1})
+    })
+    .catch((err) => {
+      useToast("An error occurred while deleting user", "error", "toast", { limit: 1})
+    })
+  }
 
 
   const handleAddUser = (e) => {
@@ -107,7 +119,7 @@ const Users = () => {
                     <p>No users found</p>
                   :
                     users.map((user, index) => (
-                      <UserCard key={index} user={user} onClick={() => setActiveUser(user)}  />
+                      <UserCard key={index} handleDelete={handleDeleteUser} user={user} onClick={() => setActiveUser(user)}  />
                     ))
                 }
                 </div>

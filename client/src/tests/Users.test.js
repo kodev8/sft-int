@@ -2,7 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import userEvent from '@testing-library/user-event';
 import Users from '../components/Users'; 
-import { createUser, fetchUsers } from '../utils/services/user';
+import { createUser, fetchUsers, deleteUser } from '../utils/services/user';
 import { useToast } from '../utils/useToast';
 
 jest.mock('../constants/loader', () => ({
@@ -190,6 +190,60 @@ describe('Users component', () => {
             expect(useToast).toHaveBeenCalledTimes(1);
             expect(useToast).toHaveBeenCalledWith('An error occurred while creating user', 'error', 'toast', { limit: 1 });
         });
+    });
+
+    // DELETE
+    // check if user is deleted when delete button is clicked
+    describe('Deleting user', () => {
+        test('User is deleted successfully', async () => {
+        
+            fetchUsers.mockResolvedValueOnce([{ name: mockUserJohn.name, email: mockUserJohn.email }]);
+            deleteUser.mockResolvedValueOnce({});
+
+            render(<Users />);
+            expect(await screen.findByText(mockUserJohn.name)).toBeInTheDocument();
+            expect(await screen.findByText(mockUserJohn.email)).toBeInTheDocument();
+            const delButton = screen.getByTestId(`delete-${mockUserJohn.email}`)
+            expect(delButton).toBeInTheDocument();
+            await userEvent.click(screen.getByText('Delete'));
+            await waitFor(() => {
+
+                // user is removed from the list
+                expect(screen.queryByText(mockUserJohn.name)).not.toBeInTheDocument();
+                expect(screen.queryByText('john@email.com')).not.toBeInTheDocument();
+
+                // delete function is called
+                expect(deleteUser).toHaveBeenCalledTimes(1);
+                expect(deleteUser).toHaveBeenCalledWith(mockUserJohn.email);
+
+                // toast appears
+                expect(useToast).toHaveBeenCalledTimes(1);
+                expect(useToast).toHaveBeenCalledWith('User deleted successfully', 'success', 'toast', { limit: 1 });
+
+                // no users found message appears
+                expect(screen.getByText("No users found")).toBeInTheDocument();
+            });
+        })
+
+        // check if alert appears if an error occurs when deleting user
+        test('Toast appears if an error occurs when deleting user', async () => {
+            fetchUsers.mockResolvedValueOnce([{ name: mockUserJohn.name, email: mockUserJohn.email }]);
+            deleteUser.mockImplementationOnce(() => Promise.reject(new Error('An error occurred')));
+            render(<Users />);
+            expect(await screen.findByText(mockUserJohn.name)).toBeInTheDocument();
+            expect(await screen.findByText(mockUserJohn.email)).toBeInTheDocument();
+            const delButton = screen.getByTestId(`delete-${mockUserJohn.email}`)
+            expect(delButton).toBeInTheDocument();
+            await userEvent.click(screen.getByText('Delete'));
+            await waitFor(() => {
+                expect(deleteUser).toHaveBeenCalledTimes(1);
+                expect(deleteUser).toHaveBeenCalledWith(mockUserJohn.email);
+                expect(useToast).toHaveBeenCalledTimes(1);
+                expect(useToast).toHaveBeenCalledWith('An error occurred while deleting user', 'error', 'toast', { limit: 1 });
+                expect(screen.getByText(mockUserJohn.name)).toBeInTheDocument();
+                expect(screen.getByText(mockUserJohn.email)).toBeInTheDocument();
+            });
+        })
     });
 
 })

@@ -18,3 +18,12 @@ export const createUser = async (user) => {
     }
 }
 
+export const deleteUser = async (email) => {
+    try {
+        const response = await instance.delete(`/users`,{data: {email}});
+        return response.data;
+    } catch (error) {
+        throw new Error(error);
+    }
+}
+
