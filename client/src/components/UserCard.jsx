@@ -1,7 +1,7 @@
 import { Button } from './FormElements'
 
 
-const UserCard = ({ user, onClick }) => {
+const UserCard = ({ user, handleDelete, onClick }) => {
 
 
     return (
@@ -13,7 +13,7 @@ const UserCard = ({ user, onClick }) => {
         </div>
         <div className='flex ml-auto gap-x-2'>
             <Button label="Edit" color="bg-blue-500"  />
-            <Button label="Delete" color="bg-red-500" />
+            <Button testid={`delete-${user.email}`} label="Delete" color="bg-red-500" onClick={() =>  handleDelete(user.email)} />
         </div>
         
     </div>
