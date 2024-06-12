@@ -1,17 +1,20 @@
 import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom';
 import User from "../components/UserCard";
 
 
 describe('User card tests', () => {
 
-    let mockUser
+    let mockUser, mockHandleDelete;
     beforeEach(() => {
 
             mockUser = {  
                 name: "John Doe",
                 email: "johndoe@email.com"
             };
+
+            mockHandleDelete = jest.fn();
 
     })
 
@@ -32,6 +35,21 @@ describe('User card tests', () => {
         expect(email).toBeInTheDocument();
         expect(editButton).toBeInTheDocument();
         expect(deleteButton).toBeInTheDocument();
+    })
+
+    test('Delete button calls delete user', async() => {
+        const {container, unmount } = render(<User user={mockUser} handleDelete={mockHandleDelete} />);
+        mockHandleDelete.mockImplementation(() => {
+            unmount()
+        });
+
+        const deleteButton = screen.queryByText('Delete');
+        await userEvent.click(deleteButton);
+        expect(mockHandleDelete).toHaveBeenCalledTimes(1); // delete logic tested for Users.jsx
+
+        expect(container).toBeEmptyDOMElement();
+        expect(screen.queryByText(mockUser.name)).not.toBeInTheDocument();
+        expect(screen.queryByText(mockUser.email)).not.toBeInTheDocument();
     })
 })
 
