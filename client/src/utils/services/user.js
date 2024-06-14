@@ -27,3 +27,15 @@ export const deleteUser = async (email) => {
     }
 }
 
+export const updateUser = async (email, data) => {
+    try {
+        const response = await instance.patch(`/users`,  {email, ...data});
+        if (response.status === 204){
+            response.data = 204;
+        }
+        return response.data;
+    } catch (error) {
+        throw new Error(error);
+    }
+}
+

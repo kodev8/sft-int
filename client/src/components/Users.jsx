@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { Button, InputField } from './FormElements'  
 import UserCard from './UserCard'
 import UserPage from './UserPage'
-import { createUser, fetchUsers, deleteUser } from '../utils/services/user'
+import { createUser, fetchUsers, deleteUser, updateUser } from '../utils/services/user'
 import { useToast } from '../utils/useToast'
 
 const Users = () => { 
@@ -43,6 +43,22 @@ const Users = () => {
     })
   }
 
+  const handleUpdateUser = async(email, data) => {
+
+    // errors caught in usercard to only unset form if update is successful // see UserCard.jsx updateWrapper
+      const res = await updateUser(email, data)
+      setUsers(users.map((user) => {
+        if (user.email === email) {
+          return { ...user, ...data }
+        }
+        return user
+    }))
+    if (res === 204) {
+      useToast(`${email}'s data not changed`, "success", "toast", { limit: 1})
+    }else{
+      useToast(`${email} updated successfully`, "success", "toast", { limit: 1})
+    }
+  }
 
   const handleAddUser = (e) => {
     e.preventDefault()
@@ -119,7 +135,7 @@ const Users = () => {
                     <p>No users found</p>
                   :
                     users.map((user, index) => (
-                      <UserCard key={index} handleDelete={handleDeleteUser} user={user} onClick={() => setActiveUser(user)}  />
+                      <UserCard key={index} handleDelete={handleDeleteUser}  handleUpdate={handleUpdateUser} user={user} onClick={() => setActiveUser(user)}  />
                     ))
                 }
                 </div>
