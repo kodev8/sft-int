@@ -2,7 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import userEvent from '@testing-library/user-event';
 import Users from '../components/Users'; 
-import { createUser, fetchUsers, deleteUser } from '../utils/services/user';
+import { createUser, fetchUsers, deleteUser, updateUser } from '../utils/services/user';
 import { useToast } from '../utils/useToast';
 
 jest.mock('../constants/loader', () => ({
@@ -14,7 +14,7 @@ jest.mock('../utils/services/user');
 jest.mock('../utils/useToast');
 
 describe('Users component', () => {
-    let mockUserJohn, mockUserJane, mockUsers;
+    let mockUserJohn, mockUserJane, mockUsers, updatedJohn;
     beforeEach(() => {
         useToast.mockImplementation(() => {});
         mockUserJohn = {
@@ -25,6 +25,11 @@ describe('Users component', () => {
         mockUserJane = {
             name: 'Jane Doe',
             email: 'janedoe@email.com'
+        }
+
+        updatedJohn = {
+            ...mockUserJohn,
+            name: "John Smith",
         }
 
         mockUsers = [mockUserJohn, mockUserJane]
@@ -244,6 +249,155 @@ describe('Users component', () => {
                 expect(screen.getByText(mockUserJohn.email)).toBeInTheDocument();
             });
         })
+    });
+
+    describe('Updating user', () => {
+        // check if user is updated when edit button is clicked
+        test('User is updated successfully (without editing others)', async () => {
+            fetchUsers.mockResolvedValueOnce(mockUsers);
+            updateUser.mockResolvedValueOnce(updatedJohn);
+            render(<Users />);
+            // check if users are rendered
+
+            await waitFor( async() => {
+            for (const user of mockUsers) {
+                expect( await screen.getByText(user.name)).toBeInTheDocument();
+                expect(await screen.getByText(user.email)).toBeInTheDocument();
+            }});
+
+
+            // click edit button
+            const editButtons = screen.getAllByText('Edit')
+            expect(editButtons).toHaveLength(mockUsers.length);
+            const editButton = editButtons[0];
+            await userEvent.click(editButton);
+
+            // check if cancel and confirm buttons and inputs are rendered
+            const cancelButton = screen.getByText('Cancel');
+            const confirmButton = screen.getByText('Confirm');
+            const nameInput = screen.getByTestId(`input-${mockUserJohn.email}`);
+            expect(cancelButton).toBeInTheDocument();
+            expect(confirmButton).toBeInTheDocument();
+            expect(nameInput).toBeInTheDocument();
+            
+            // clear input and type new name
+            await userEvent.clear(nameInput);
+            await userEvent.type(nameInput, updatedJohn.name);
+
+            // checks if state value is being updated
+            expect(nameInput.value).toEqual(updatedJohn.name);
+
+            // click confirm button
+            await userEvent.click(confirmButton);
+
+            // check if user is updated
+            await waitFor(() => {
+                expect(updateUser).toHaveBeenCalledTimes(1);
+                expect(updateUser).toHaveBeenCalledWith(mockUserJohn.email, { name: updatedJohn.name });
+                expect(useToast).toHaveBeenCalledTimes(1);
+                expect(useToast).toHaveBeenCalledWith(`${mockUserJohn.email} updated successfully`, 'success', 'toast', { limit: 1 });
+                expect(screen.getByText(updatedJohn.name)).toBeInTheDocument();
+                expect(screen.queryByText(mockUserJohn.name)).not.toBeInTheDocument();
+
+                expect(screen.getByText(mockUserJane.name)).toBeInTheDocument(); // ensure jane is not updated
+                expect(screen.getByText(mockUserJane.email)).toBeInTheDocument();
+
+            })
+
+        });
+
+        // check if alert appears if an error occurs when updating user without changing data
+        test('Toast appears when unchanged data submitted', async () => {
+            fetchUsers.mockResolvedValueOnce(mockUsers);
+            updateUser.mockResolvedValueOnce(204);
+            render(<Users />);
+
+            await waitFor( async() => {
+            const editButton = screen.getByTestId(`edit-${mockUserJohn.email}`);
+            await userEvent.click(editButton);
+            const confirmButton = screen.getByTestId(`confirm-${mockUserJohn.email}`);
+            await userEvent.click(confirmButton);
+            })
+
+            await waitFor(() => {
+                expect(updateUser).toHaveBeenCalledTimes(1);
+                expect(useToast).toHaveBeenCalledTimes(1);
+                expect(useToast).toHaveBeenCalledWith(`${mockUserJohn.email}'s data not changed`, "success", "toast", { limit: 1});
+                expect(screen.getByText(mockUserJohn.name)).toBeInTheDocument();
+                expect(screen.getByText(mockUserJohn.email)).toBeInTheDocument();
+            });
+        });
+
+        // check if toast appears when sending empty name
+        test('Error Toast appears when sending empty name for edit', async () => {
+            fetchUsers.mockResolvedValueOnce(mockUsers);
+            updateUser.mockImplementationOnce(() => Promise.reject(new Error('An error occurred')));
+            render(<Users />);
+            await waitFor( async() => {
+            const editButton = screen.getByTestId(`edit-${mockUserJohn.email}`);
+            await userEvent.click(editButton);
+            const input = screen.getByTestId(`input-${mockUserJohn.email}`);
+            await userEvent.clear(input);
+            const confirmButton = screen.getByTestId(`confirm-${mockUserJohn.email}`);
+            await userEvent.click(confirmButton);
+            })
+
+            await waitFor(() => {
+                expect(updateUser).toHaveBeenCalledTimes(1);
+                expect(useToast).toHaveBeenCalledTimes(1);
+                expect(useToast).toHaveBeenCalledWith('Error updating user', 'error', 'user-update-request-error', {limit: 1});
+            });
+        });
+
+
+        // check if cancel button returns to user details when clicked
+        test('Cancel button returns to user details', async () => {
+            updateUser.mockResolvedValueOnce(updatedJohn);
+            fetchUsers.mockResolvedValueOnce([mockUserJohn]);
+            render(<Users />);
+            // check if user is rendered
+            const userName = await screen.findByText(mockUserJohn.name);
+            const userEmail = await screen.findByText(mockUserJohn.email)
+            expect(userName).toBeInTheDocument();
+            expect(userEmail).toBeInTheDocument();
+
+            // click edit button
+            const editButton = screen.getByText('Edit');
+            await userEvent.click(editButton);
+
+        
+            // check if cancel and confirm buttons and inputs are rendered
+            const cancelButton = screen.getByText('Cancel');
+            const confirmButton = screen.getByText('Confirm');
+            const nameInput = screen.getByTestId(`input-${mockUserJohn.email}`);
+            expect(cancelButton).toBeInTheDocument();
+            expect(confirmButton).toBeInTheDocument();
+            expect(nameInput).toBeInTheDocument();
+            
+            // clear input and type new name
+            await userEvent.clear(nameInput);
+            await userEvent.type(nameInput, updatedJohn.name);
+        
+            expect(nameInput.value).toEqual(updatedJohn.name);
+
+            // click cancel button
+            await userEvent.click(cancelButton);
+
+            // check if user is not updated
+            await waitFor(() => {
+                expect(updateUser).toHaveBeenCalledTimes(0);
+                expect(useToast).toHaveBeenCalledTimes(0);
+                expect(screen.getByText(mockUserJohn.name)).toBeInTheDocument();
+                expect(screen.queryByText(updatedJohn.name)).not.toBeInTheDocument();
+            })
+
+            // ensure form value is also reset
+            await userEvent.click(screen.getByText('Edit'));
+            await waitFor(() => {
+                expect(screen.getByTestId(`input-${mockUserJohn.email}`).value).toEqual(mockUserJohn.name);
+            })
+
+        });
     });
 
 })
